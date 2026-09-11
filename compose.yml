@@ -1,0 +1,31 @@
+services:
+  viaproxy:
+    image: ghcr.io/viaversion/viaproxy:latest
+    container_name: mc-viaproxy
+    volumes:
+      - ./viaproxy:/app/run
+    ports:
+      - 25568:25568
+    extra_hosts:
+      - host.docker.internal:host-gateway
+    stdin_open: true
+    tty: true
+    restart: unless-stopped
+  mc-bot:
+    image: mirror.gcr.io/library/node:22-trixie-slim
+    container_name: mc-agent-bot
+    working_dir: /app
+    depends_on:
+      - viaproxy
+    ports:
+      - 3001:3001 # Expose MCP Streamable HTTP port to LAN
+    volumes:
+      - .:/app
+      - ./node_modules:/app/node_modules
+    env_file:
+      - .env
+    command: sh -c "npm install --omit=dev && npm start"
+    stdin_open: true
+    tty: true
+    restart: unless-stopped
+networks: {}
