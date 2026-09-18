@@ -1431,6 +1431,14 @@ class ActionManager
 		return { ok: true, data: entities }
 	}
 
+	_isAvoided (name) {
+		const k = String(name).toLowerCase()
+		const until = this._avoid.get(k)
+		if (!until) return false
+		if (Date.now() > until) { this._avoid.delete(k); return false }
+		return true
+	}
+
 	getThreats(maxDistance = 24)
 	{
 		const radius = Number(maxDistance)
@@ -1478,6 +1486,7 @@ class ActionManager
 					.replace(/ /g, '_')
 
 				if (!hostileNames.has(name)) return false
+				if (this._isAvoided(name)) return false
 
 				return entity.position.distanceTo(botPosition) <= radius
 			})

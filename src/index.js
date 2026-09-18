@@ -7,16 +7,19 @@ const cfg = require('./config')
 const ActionManager = require('./actionManager')
 const CommandHandler = require('./commandHandler')
 const { startMcpServer } = require('./mcpServer')
+const TelegramBridge = require('./telegramBridge')
 
 let bot = null
 let actionManager = null
 let commandHandler = null
+let telegram = null
 let autoLoopTimer = null
 let isShuttingDown = false
 
 const log = (level, ...args) => {
   const ts = new Date().toISOString().replace('T', ' ').slice(0, 19)
   console.log(`[${ts}] [${level.toUpperCase()}]`, ...args)
+  if (telegram) telegram.mirror(level, args) // chat_out, chat, whisper, warn, error → Telegram
 }
 
 function say (message) {
@@ -29,6 +32,15 @@ function say (message) {
 }
 
 startMcpServer(() => actionManager, 3001)
+
+telegram = new TelegramBridge(cfg, {
+  onCommand: async (sender, text) => {
+    if (!commandHandler) { telegram.reply('Bot non connesso a Minecraft.'); return }
+    await commandHandler.handle(sender, text)
+  }
+})
+if (cfg.telegram.mirrorConsole) telegram.attachConsoleMirror()
+telegram.start()
 
 function initBot () {
   log('info', `Connecting to ${cfg.host}:${cfg.port} as ${cfg.username}...`)
@@ -56,7 +68,7 @@ function initBot () {
       moves.canDig = false // Conservative: never tunnel through structures unless commanded
       moves.allow1by1towers = true
       moves.allowFreeMotion = true
-      moves.scaffoldingBlocks = [pink_wool]
+      moves.scaffoldingBlocks = ["pink_wool"]
       moves.digCost = 3
       moves.placeCost = 2
       moves.entitiesToAvoid = new Set([
@@ -173,6 +185,7 @@ for (const sig of ['SIGINT', 'SIGTERM']) {
     isShuttingDown = true
     log('info', 'Termination requested. Closing...')
     stopAutoLoops()
+    if (telegram) telegram.stop()
     if (actionManager) actionManager.stop()
     if (bot) bot.quit('shutdown')
     setTimeout(() => process.exit(0), 500)

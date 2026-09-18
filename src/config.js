@@ -24,5 +24,21 @@ module.exports = {
   movementTimeout: parseInt(process.env.MOVEMENT_TIMEOUT || '30', 10) * 1000,
   followDistance: parseInt(process.env.FOLLOW_DISTANCE || '2', 10),
   reconnectDelay: parseInt(process.env.RECONNECT_DELAY || '10', 10) * 1000,
-  commandCooldown: parseInt(process.env.COMMAND_COOLDOWN || '500', 10)
+  commandCooldown: parseInt(process.env.COMMAND_COOLDOWN || '500', 10),
+
+    telegram: {
+    enabled: process.env.TELEGRAM_ENABLED === 'true',
+    token: process.env.TELEGRAM_BOT_TOKEN || '',
+    allowedChatIds: (process.env.TELEGRAM_ALLOWED_CHAT_IDS || '')
+      .split(',').map(s => s.trim()).filter(Boolean),
+    allowedUsernames: (process.env.TELEGRAM_ALLOWED_USERNAMES || '')
+      .split(',').map(s => s.trim().replace(/^@/, '').toLowerCase()).filter(Boolean),
+    mirrorAll: process.env.TELEGRAM_MIRROR_ALL !== 'false',
+    mirrorConsole: process.env.TELEGRAM_MIRROR_CONSOLE === 'true',
+    mirrorLevels: (process.env.TELEGRAM_MIRROR_LEVELS || 'chat,chat_out,whisper,warn,error')
+      .split(',').map(s => s.trim().toLowerCase()).filter(Boolean),
+    sendIntervalMs: parseInt(process.env.TELEGRAM_SEND_INTERVAL_MS || '1100', 10),
+    pollTimeoutSec: parseInt(process.env.TELEGRAM_POLL_TIMEOUT || '30', 10),
+    maxMirrorLength: parseInt(process.env.TELEGRAM_MAX_LENGTH || '600', 10)
+  },
 }

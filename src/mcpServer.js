@@ -216,6 +216,15 @@ function createServer(getActionManager)
 		{
 			console.log(`[echo] ${message}`)
 
+			try
+            {
+                // La chat MC non accetta newline e tronca ~256 char
+                mgr.bot.chat(String(message).replace(/\n/g, ' ').slice(0, 256))
+            } catch (err)
+            {
+                return { content: [{ type: 'text', text: `Chat failed: ${err.message}` }] }
+            }
+
 			return {
 				content: [
 					{
